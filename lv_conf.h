@@ -280,8 +280,8 @@
  *Used if lvgl is bound to higher level language and the memory is managed by that language*/
 #define LV_ENABLE_GC 1
 #if LV_ENABLE_GC != 0
-    #define LV_GC_INCLUDE "py/mpstate.h"                           /*Include Garbage Collector related things*/
-    #define LV_GC_ROOT(x) MP_STATE_PORT(x)
+    #define LV_GC_INCLUDE "lv_mp_global_objects.h"                           /*Include Garbage Collector related things*/
+    #define LV_GC_ROOT(x) lvgl_global_objects->x
 #endif /*LV_ENABLE_GC*/
 
 /*Default image cache size. Image caching keeps some images opened.
