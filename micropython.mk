@@ -6,18 +6,31 @@ LVGL_DIR = $(LVGL_BINDING_DIR)/lvgl
 LVGL_GENERIC_DRV_DIR = $(LVGL_BINDING_DIR)/driver/generic
 INC += -I$(LVGL_BINDING_DIR) -I$(LVGL_BINDING_DIR)/include
 
+ifeq ($(wildcard $(LVGL_DIR)/.),,)
+$(info lvgl submodule not init)
+else
 ALL_LVGL_SRC = $(shell find $(LVGL_DIR) -type f -name '*.h') $(LVGL_BINDING_DIR)/lv_conf.h
+endif
 LVGL_PP = $(BUILD)/lvgl/lvgl.pp.c
 LVGL_MPY = $(BUILD)/lvgl/lv_mpy.c
 LVGL_MPY_METADATA = $(BUILD)/lvgl/lv_mpy.json
 QSTR_GLOBAL_DEPENDENCIES += $(LVGL_MPY)
-CFLAGS_USERMOD += $(LV_CFLAGS) $(INC)
-
+CFLAGS_USERMOD += $(LV_CFLAGS) $(INC) -include "lvgl/lvgl.h"
+LVGL_SUBMODULES = lvgl pycparser
 
 ifneq ($(MICROPY_FLOAT_IMPL),double)
 # Tiny TTF library needs a number of math.h double functions
 CFLAGS_USERMOD += -DLV_USE_TINY_TTF=0
 endif
+
+# chain lvgl submodule check off the micropython submodules rule.
+submodules: lvgl_submodule
+lvgl_submodule:
+	$(ECHO) "Updating submodules: $(LVGL_SUBMODULES)"
+	$(Q)cd $(LVGL_BINDING_DIR) && git submodule sync $(LVGL_SUBMODULES)
+	$(Q)cd $(LVGL_BINDING_DIR) && git submodule update --init $(LVGL_SUBMODULES)
+.PHONY: lvgl_submodule
+
 
 # Generate the main micropython bindings library
 $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py
@@ -34,13 +47,15 @@ ifeq ($(notdir $(CURDIR)),unix)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-SRC_USERMOD += $(shell find $(LVGL_BINDING_DIR)/driver/SDL -type f -name "*.c")
+# Ensure SDL libs are installed, eg. sudo apt install -y libsdl2-dev
+CFLAGS_USERMOD += -DMICROPY_SDL=1
+# SRC_USERMOD += $(shell find $(LVGL_BINDING_DIR)/driver/SDL -type f -name "*.c")
 LDFLAGS_USERMOD += -lSDL2
 endif
 
-ifneq ($(UNAME_S),Darwin)
-SRC_USERMOD += $(LVGL_BINDING_DIR)/driver/linux/modfb.c
-endif
+#ifneq ($(UNAME_S),Darwin)
+#SRC_USERMOD += $(LVGL_BINDING_DIR)/driver/linux/modfb.c
+#endif
 
 # Additional optional libraries
 
