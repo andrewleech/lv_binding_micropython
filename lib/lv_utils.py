@@ -42,7 +42,7 @@ except:
     try:
         from lv_timer import Timer
     except:
-        if sys.platform != "darwin":
+        if sys.platform not in ("darwin", "linux", "win..."):
             raise RuntimeError("Missing machine.Timer implementation!")
         Timer = False
 
