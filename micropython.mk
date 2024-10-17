@@ -65,8 +65,9 @@ CFLAGS_EXTMOD += -DMICROPY_FB=1
 endif
 
 
-ifeq ($(UNAME_S),Linux)
-# Include optional libraries on Linux if available
+ifneq (, $(shell which pkg-config))
+# Linux Support: if pkg-config is installed use it to 
+# check for and use optional libraries
 
 SDL_CFLAGS_EXTMOD :=  $(shell pkg-config --silence-errors --cflags sdl2)
 SDL_LDFLAGS_EXTMOD := $(shell pkg-config --silence-errors --libs   sdl2)
@@ -96,6 +97,8 @@ ifneq ($(FFMPEG_LDFLAGS_MOD),)
 CFLAGS_MOD += $(FFMPEG_CFLAGS_MOD) -DMICROPY_FFMPEG=1
 LDFLAGS_MOD += $(FFMPEG_LDFLAGS_MOD)
 endif
+
+endif  # Linux
 
 endif  # unix port
 
