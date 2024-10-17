@@ -2750,7 +2750,7 @@ GENMPY_UNUSED static const mp_lv_obj_type_t mp_lv_{obj}_type = {{
 }};
     """.format(
             module_name = module_name,
-            obj = sanitize(obj_name)
+            obj = sanitize(obj_name),
             locals_dict_entries = ",\n    ".join(gen_obj_methods(obj_name)),
             ctor = ctor.format(obj = obj_name, ctor_name = ctor_func.name) if has_ctor(obj_name) else '',
             make_new = 'make_new, %s_make_new,' % obj_name if is_obj else '',
