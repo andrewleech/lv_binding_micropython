@@ -36,7 +36,6 @@ lvgl_submodule:
 	$(Q)cd $(LVGL_BINDING_DIR) && git submodule update --init $(LVGL_SUBMODULES)
 .PHONY: lvgl_submodule
 
-
 # Generate the main micropython bindings library
 $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py
 	$(ECHO) "LVGL-GEN $@"
@@ -55,6 +54,8 @@ CFLAGS_USERMOD += -Wno-unused-function
 
 ifeq ($(notdir $(CURDIR)),unix)
 # This section only included when building the micropython unix port
+
+FROZEN_MANIFEST ?= $(LVGL_BINDING_DIR)/manifest_unix.py
 
 UNAME_S := $(shell uname -s)
 
@@ -98,3 +99,5 @@ endif
 
 endif  # unix port
 
+# Default / fallback settings for all ports.
+FROZEN_MANIFEST ?= $(LVGL_BINDING_DIR)/manifest.py
