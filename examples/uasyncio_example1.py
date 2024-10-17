@@ -83,7 +83,7 @@ class MsgBox(lv.win):
         self.set_size(100,80)
         self.add_title("Pop")
         msg_box_close_btn = self.add_button(lv.SYMBOL.CLOSE, 20)
-        msg_box_close_btn.add_event(lambda e: self.close_msg_box(), lv.EVENT.RELEASED, None)
+        msg_box_close_btn.add_event_cb(lambda e: self.close_msg_box(), lv.EVENT.RELEASED, None)
 
         header = self.get_header()
         header.set_style_bg_color(lv.color_hex3(0xFEE), lv.PART.MAIN)
@@ -104,7 +104,7 @@ class MsgBox(lv.win):
         self.label = lv.label(content)
 
         for element in [content, header]:
-            element.add_event(self.drag_event_handler, lv.EVENT.PRESSING, None)
+            element.add_event_cb(self.drag_event_handler, lv.EVENT.PRESSING, None)
 
         self.opened = True
 
@@ -121,7 +121,7 @@ class MsgBox(lv.win):
             self.anim.set_custom_exec_cb(lambda obj, val:
                     self.set_style_opa(val, lv.PART.MAIN))
             self.anim.set_path_cb(lv.anim_t.path_ease_in)
-            self.anim.set_ready_cb(lambda a: self.del_async())
+            self.anim.set_completed_cb(lambda a: self.delete_async())
             lv.anim_t.start(self.anim)
             self.opened = False
 
@@ -161,7 +161,7 @@ async def btn_event_task(obj=None, event=-1):
 scr = lv.screen_active()
 btn = lv.button(scr)
 btn.align(lv.ALIGN.TOP_MID, 0, 10)
-btn.add_event(lambda e: create_task(btn_event_task()), lv.EVENT.CLICKED, None)
+btn.add_event_cb(lambda e: create_task(btn_event_task()), lv.EVENT.CLICKED, None)
 label = lv.label(btn)
 label.set_text('Click Me Again!')
 
