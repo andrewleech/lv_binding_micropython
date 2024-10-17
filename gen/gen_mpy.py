@@ -1072,7 +1072,6 @@ GENMPY_UNUSED static MP_DEFINE_CONST_OBJ_TYPE(
     MP_QSTR_function,
     MP_TYPE_FLAG_BINDS_SELF | MP_TYPE_FLAG_BUILTIN_FUN,
     call, lv_fun_builtin_var_call,
-    unary_op, mp_obj_int_unary_op,
     buffer, mp_func_get_buffer
 );
 
@@ -1081,7 +1080,6 @@ GENMPY_UNUSED static MP_DEFINE_CONST_OBJ_TYPE(
     MP_QSTR_function,
     MP_TYPE_FLAG_BUILTIN_FUN,
     call, lv_fun_builtin_var_call,
-    unary_op, mp_obj_int_unary_op,
     buffer, mp_func_get_buffer
 );
 
@@ -1364,6 +1362,10 @@ void mp_lv_deinit_gc()
     lvgl_mod_initialized = MP_STATE_VM(lvgl_mod_initialized) = 0;
 
 }
+
+#if !MICROPY_MODULE_BUILTIN_INIT
+#error MICROPY_MODULE_BUILTIN_INIT enabled is required in mpconfig port/board/variant.
+#endif
 
 static mp_obj_t lvgl_mod___init__(void) {
     if (!MP_STATE_VM(lvgl_mod_initialized)) {
