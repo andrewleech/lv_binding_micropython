@@ -49,58 +49,55 @@ SRC_USERMOD += $(LVGL_MPY)
 
 CFLAGS_USERMOD += -Wno-unused-function
 
+FROZEN_MANIFEST += $(LVGL_BINDING_DIR)/manifest.py
+
 ################################################################################
 # Per-port Support 
 
-ifeq ($(notdir $(CURDIR)),unix)
+MICROPY_PORT = $(notdir $(CURDIR))
+
+ifeq ($(MICROPY_PORT),unix)
 # This section only included when building the micropython unix port
-
-FROZEN_MANIFEST ?= $(LVGL_BINDING_DIR)/manifest_unix.py
-
 UNAME_S := $(shell uname -s)
 
 ifneq ($(UNAME_S),Darwin)
 # On macos enable framebuffer support
-CFLAGS_EXTMOD += -DMICROPY_FB=1
+CFLAGS_USERMOD += -DMICROPY_FB=1
 endif
 
-
-ifneq (, $(shell which pkg-config))
+ifneq (,$(shell which pkg-config))
 # Linux Support: if pkg-config is installed use it to 
 # check for and use optional libraries
 
-SDL_CFLAGS_EXTMOD :=  $(shell pkg-config --silence-errors --cflags sdl2)
-SDL_LDFLAGS_EXTMOD := $(shell pkg-config --silence-errors --libs   sdl2)
-ifneq ($(SDL_LDFLAGS_EXTMOD),)
-CFLAGS_EXTMOD += $(SDL_CFLAGS_EXTMOD) -DMICROPY_SDL=1
-LDFLAGS_EXTMOD += $(SDL_LDFLAGS_EXTMOD)
+SDL_CFLAGS_USERMOD :=  $(shell pkg-config --silence-errors --cflags sdl2)
+SDL_LDFLAGS_USERMOD := $(shell pkg-config --silence-errors --libs   sdl2)
+ifneq ($(SDL_LDFLAGS_USERMOD),)
+CFLAGS_USERMOD += $(SDL_CFLAGS_USERMOD) -DMICROPY_SDL=1
+LDFLAGS_USERMOD += $(SDL_LDFLAGS_USERMOD)
 endif
 
-RLOTTIE_CFLAGS_MOD :=  $(shell pkg-config --silence-errors --cflags rlottie)
-RLOTTIE_LDFLAGS_MOD := $(shell pkg-config --silence-errors --libs   rlottie)
-ifneq ($(RLOTTIE_LDFLAGS_MOD),)
-CFLAGS_MOD += $(RLOTTIE_CFLAGS_MOD) -DMICROPY_RLOTTIE=1
-LDFLAGS_MOD += $(RLOTTIE_LDFLAGS_MOD)
+RLOTTIE_CFLAGS_USERMOD :=  $(shell pkg-config --silence-errors --cflags rlottie)
+RLOTTIE_LDFLAGS_USERMOD := $(shell pkg-config --silence-errors --libs   rlottie)
+ifneq ($(RLOTTIE_LDFLAGS_USERMOD),)
+CFLAGS_USERMOD += $(RLOTTIE_CFLAGS_USERMOD) -DMICROPY_RLOTTIE=1
+LDFLAGS_USERMOD += $(RLOTTIE_LDFLAGS_USERMOD)
 endif
 
-FREETYPE_CFLAGS_MOD :=  $(shell pkg-config --silence-errors --cflags freetype2)
-FREETYPE_LDFLAGS_MOD := $(shell pkg-config --silence-errors --libs   freetype2)
-ifneq ($(FREETYPE_LDFLAGS_MOD),)
-CFLAGS_MOD += $(FREETYPE_CFLAGS_MOD) -DMICROPY_FREETYPE=1
-LDFLAGS_MOD += $(FREETYPE_LDFLAGS_MOD)
+FREETYPE_CFLAGS_USERMOD :=  $(shell pkg-config --silence-errors --cflags freetype2)
+FREETYPE_LDFLAGS_USERMOD := $(shell pkg-config --silence-errors --libs   freetype2)
+ifneq ($(FREETYPE_LDFLAGS_USERMOD),)
+CFLAGS_USERMOD += $(FREETYPE_CFLAGS_USERMOD) -DMICROPY_FREETYPE=1
+LDFLAGS_USERMOD += $(FREETYPE_LDFLAGS_USERMOD)
 endif
 
 FFMPEG_LIBS := libavformat libavcodec libswscale libavutil
-FFMPEG_CFLAGS_MOD :=  $(shell pkg-config --silence-errors --cflags $(FFMPEG_LIBS))
-FFMPEG_LDFLAGS_MOD := $(shell pkg-config --silence-errors --libs   $(FFMPEG_LIBS))
-ifneq ($(FFMPEG_LDFLAGS_MOD),)
-CFLAGS_MOD += $(FFMPEG_CFLAGS_MOD) -DMICROPY_FFMPEG=1
-LDFLAGS_MOD += $(FFMPEG_LDFLAGS_MOD)
+FFMPEG_CFLAGS_USERMOD :=  $(shell pkg-config --silence-errors --cflags $(FFMPEG_LIBS))
+FFMPEG_LDFLAGS_USERMOD := $(shell pkg-config --silence-errors --libs   $(FFMPEG_LIBS))
+ifneq ($(FFMPEG_LDFLAGS_USERMOD),)
+CFLAGS_USERMOD += $(FFMPEG_CFLAGS_USERMOD) -DMICROPY_FFMPEG=1
+LDFLAGS_USERMOD += $(FFMPEG_LDFLAGS_USERMOD)
 endif
 
 endif  # Linux
 
 endif  # unix port
-
-# Default / fallback settings for all ports.
-FROZEN_MANIFEST ?= $(LVGL_BINDING_DIR)/manifest.py
