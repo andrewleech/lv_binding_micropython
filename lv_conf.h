@@ -151,7 +151,9 @@
 #endif
 
 /* Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
+#ifndef LV_USE_DRAW_VGLITE
 #define LV_USE_DRAW_VGLITE 0
+#endif
 
 #if LV_USE_DRAW_VGLITE
     /* Enable blit quality degradation workaround recommended for screen's dimension > 352 pixels. */
@@ -167,7 +169,9 @@
 #endif
 
 /* Use NXP's PXP on iMX RTxxx platforms. */
+#ifndef LV_USE_DRAW_PXP
 #define LV_USE_DRAW_PXP 0
+#endif
 
 #if LV_USE_DRAW_PXP
     /* Enable PXP asserts. */
