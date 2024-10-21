@@ -19,7 +19,7 @@ LVGL_PP = $(BUILD)/lvgl/lvgl.pp.c
 LVGL_MPY = $(BUILD)/lvgl/lv_mpy.c
 LVGL_MPY_METADATA = $(BUILD)/lvgl/lv_mpy.json
 QSTR_GLOBAL_DEPENDENCIES += $(LVGL_MPY)
-INC += -I$(LVGL_BINDING_DIR) -I$(LVGL_BINDING_DIR)/include
+INC += -I$(LVGL_BINDING_DIR) -I$(LVGL_BINDING_DIR)/include -I$(LVGL_DIR)/src
 CFLAGS_USERMOD += $(INC) $(LV_CFLAGS)
 
 ifneq ($(MICROPY_FLOAT_IMPL),double)
