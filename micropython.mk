@@ -56,6 +56,13 @@ FROZEN_MANIFEST += $(LVGL_BINDING_DIR)/manifest.py
 
 MICROPY_PORT = $(notdir $(CURDIR))
 
+ifeq ($(MICROPY_PORT),mimxrt)
+
+CFLAGS_USERMOD += -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
+#CFLAGS_USERMOD += -DLV_USE_DRAW_VGLITE=1 -DLV_USE_GPU_NXP_VG_LITE=1
+
+endif
+
 ifeq ($(MICROPY_PORT),unix)
 # This section only included when building the micropython unix port
 UNAME_S := $(shell uname -s)
