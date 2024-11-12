@@ -774,7 +774,6 @@ print ("""
  * {module_name} includes
  */
 
-#include "lvgl_support.h"
 {lv_headers}
 """.format(
         module_name = module_name,
@@ -1148,12 +1147,6 @@ static mp_obj_t lvgl_mod___init__(void)
         //   so ensure that initialisation only happens once.
         MP_STATE_VM(lvgl_mod_initialized) = true;
         lv_init();
-        #ifdef LV_PORT_DISP_INIT
-        LV_PORT_DISP_INIT();
-        #endif
-        #ifdef LV_PORT_INDEV_INIT
-        LV_PORT_INDEV_INIT();
-        #endif
     }
     return mp_const_none;
 }
@@ -1162,12 +1155,6 @@ static MP_DEFINE_CONST_FUN_OBJ_0(lvgl_mod___init___obj, lvgl_mod___init__);
 static mp_obj_t lvgl_mod___del__(void)
 {
     if (MP_STATE_VM(lvgl_mod_initialized)) {
-        #ifdef LV_PORT_INDEV_DEINIT
-        LV_PORT_INDEV_DEINIT();
-        #endif
-        #ifdef LV_PORT_DISP_DEINIT
-        LV_PORT_DISP_DEINIT();
-        #endif
         lv_deinit();
     }
     return mp_const_none;
