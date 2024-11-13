@@ -2142,7 +2142,17 @@ def try_generate_array_type(type_ast):
     # print('/* --> try_generate_array_type %s: %s */' % (arr_name, type_ast))
     dim = gen.visit(type_ast.dim) if hasattr(type_ast, 'dim') and type_ast.dim else None
     element_type = get_type(type_ast.type, remove_quals = True)
-    qualified_element_type = gen.visit(type_ast.type)
+    multidim = isinstance(type_ast.type, c_ast.ArrayDecl) and try_generate_array_type(type_ast.type)
+    if multidim and (outer_dim := gen.visit(type_ast.type.dim) if hasattr(type_ast.type, 'dim') and type_ast.type.dim else None):
+        # multi-dimensional array
+        inner_dim = dim
+        dim = outer_dim
+        qualified_element_type = gen.visit(type_ast.type.type)
+        qualified_element_arg = f"{qualified_element_type} arr[{inner_dim}][{outer_dim}]"
+    else:
+        qualified_element_type = gen.visit(type_ast.type)
+        qualified_element_arg = f"{qualified_element_type} *arr"
+    
     if element_type not in mp_to_lv or not mp_to_lv[element_type]:
         try_generate_type(type_ast.type)
         if element_type not in mp_to_lv or not mp_to_lv[element_type]:
@@ -2189,7 +2199,7 @@ GENMPY_UNUSED static {struct_tag}{type} *{arr_to_c_convertor_name}(mp_obj_t mp_a
     return ({struct_tag}{type} *)lv_arr;
 }}
 ''') + ('''
-GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_type} *arr)
+GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_arg})
 {{
     mp_obj_t obj_arr[{dim}];
     for (size_t i=0; i<{dim}; i++){{
@@ -2198,7 +2208,7 @@ GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_type} *arr)
     return mp_obj_new_list({dim}, obj_arr); // TODO: return custom iterable object!
 }}
 ''' if dim else '''
-GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_type} *arr)
+GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_arg})
 {{
     return {lv_to_mp_ptr_convertor}((void*)arr);
 }}
@@ -2209,7 +2219,7 @@ GENMPY_UNUSED static mp_obj_t {arr_to_mp_convertor_name}({qualified_type} *arr)
         type = element_type,
         type_ptr = element_type_ptr,
         struct_tag = 'struct ' if element_type in structs_without_typedef.keys() else '',
-        qualified_type = qualified_element_type,
+        qualified_arg = qualified_element_arg,
         qualified_ptr_type = qualified_element_ptr_type,
         check_dim = '//TODO check dim!' if dim else '',
         mp_to_lv_convertor = mp_to_lv[element_type],
