@@ -47,6 +47,10 @@ $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py
 SRC_USERMOD += $(shell find $(LVGL_DIR)/src $(LVGL_DIR)/examples $(LVGL_GENERIC_DRV_DIR) -type f -name "*.c")
 SRC_USERMOD += $(LVGL_MPY)
 
+SRC_USERMOD_CXX += $(shell find $(LVGL_DIR)/src/libs -type f -name "*.cpp")
+#CXXFLAGS_USERMOD += -I$(CPPEXAMPLE_MOD_DIR) -std=c++11
+LDFLAGS_USERMOD += -lstdc++
+
 CFLAGS_USERMOD += -Wno-unused-function
 
 FROZEN_MANIFEST += $(LVGL_BINDING_DIR)/manifest.py
