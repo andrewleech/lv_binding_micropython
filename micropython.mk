@@ -20,7 +20,7 @@ LVGL_MPY = $(BUILD)/lvgl/lv_mpy.c
 LVGL_MPY_METADATA = $(BUILD)/lvgl/lv_mpy.json
 QSTR_GLOBAL_DEPENDENCIES += $(LVGL_MPY)
 INC += -I$(LVGL_BINDING_DIR) -I$(LVGL_BINDING_DIR)/include -I$(LVGL_DIR)/src
-CFLAGS_USERMOD += $(INC) $(LV_CFLAGS)
+CFLAGS_USERMOD += $(INC) $(LV_CFLAGS) -DMICROPY_LV_USE_LOG=1
 
 ifneq ($(MICROPY_FLOAT_IMPL),double)
 # Tiny TTF library needs a number of math.h double functions
@@ -47,16 +47,19 @@ $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py
 SRC_USERMOD += $(shell find $(LVGL_DIR)/src $(LVGL_DIR)/examples $(LVGL_GENERIC_DRV_DIR) -type f -name "*.c")
 SRC_USERMOD += $(LVGL_MPY)
 
-SRC_USERMOD_CXX += $(shell find $(LVGL_DIR)/src/libs -type f -name "*.cpp")
-#CXXFLAGS_USERMOD += -I$(CPPEXAMPLE_MOD_DIR) -std=c++11
-LDFLAGS_USERMOD += -lstdc++
+## thorvg etc.
+# SRC_USERMOD_CXX += $(shell find $(LVGL_DIR)/src/libs -type f -name "*.cpp")
+# CXXFLAGS_USERMOD += -I$(CPPEXAMPLE_MOD_DIR) -std=c++11
+# LDFLAGS_USERMOD += -lstdc++
 
-CFLAGS_USERMOD += -Wno-unused-function
+#CFLAGS_USERMOD += -Wno-unused-function
 
 FROZEN_MANIFEST += $(LVGL_BINDING_DIR)/manifest.py
 
 ################################################################################
 # Per-port Support 
+
+MOD_DIRNAME := $(notdir $(abspath $(USERMOD_DIR)))
 
 MICROPY_PORT = $(notdir $(CURDIR))
 
@@ -64,6 +67,8 @@ ifeq ($(MICROPY_PORT),mimxrt)
 
 CFLAGS_USERMOD += -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
 #CFLAGS_USERMOD += -DLV_USE_DRAW_VGLITE=1 -DLV_USE_GPU_NXP_VG_LITE=1
+
+$(BUILD)/$(MOD_DIRNAME)/lvgl/src/draw/nxp/pxp/lv_draw_pxp_img.o: CFLAGS_USERMOD += -Wno-error=float-conversion
 
 endif
 
