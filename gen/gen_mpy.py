@@ -4445,72 +4445,75 @@ if args.metadata:
     with open(args.metadata, "w") as metadata_file:
         json.dump(metadata, metadata_file, indent=4)
 
-# Generate Python stub files, if specified
+# Generate Python stub files
 
-if args.stubs_dir:
-    import os
-    
-    # Create stubs directory if it doesn't exist
-    if not os.path.exists(args.stubs_dir):
-        os.makedirs(args.stubs_dir)
-    
-    # Prepare metadata for stub generation (reuse metadata structure if it exists)
-    if not args.metadata:
-        # Generate metadata if not already created
-        metadata = collections.OrderedDict()
-        metadata["objects"] = {obj_name: obj_metadata[obj_name] for obj_name in obj_names}
-        metadata["functions"] = {
-            simplify_identifier(f.name): func_metadata[f.name] for f in module_funcs
-        }
-        metadata["enums"] = {
-            get_enum_name(enum_name): obj_metadata[enum_name]
-            for enum_name in enums.keys()
-            if enum_name not in enum_referenced
-        }
-        metadata["structs"] = [
-            simplify_identifier(struct_name)
-            for struct_name in generated_structs
-            if struct_name in generated_structs
-        ]
-        metadata["structs"] += [
-            simplify_identifier(struct_aliases[struct_name])
-            for struct_name in struct_aliases.keys()
-        ]
-        metadata["blobs"] = [
-            simplify_identifier(global_name) for global_name in generated_globals
-        ]
-        metadata["int_constants"] = [
-            get_enum_name(int_constant) for int_constant in int_constants
-        ]
-    
-    # Load LVGL source files for documentation extraction
-    # Determine LVGL directory - look for it relative to the script location
+# Default to stubs package directory if not specified
+if not args.stubs_dir:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    lvgl_dir = os.path.join(script_dir, "..", "lvgl")
-    if not os.path.exists(lvgl_dir):
-        # Alternative: try to find it relative to input file
-        if args.input:
-            input_dir = os.path.dirname(os.path.abspath(args.input[0]))
-            lvgl_dir = os.path.join(input_dir, "lvgl")
-    
-    doc_index = None
-    try:
-        if os.path.exists(lvgl_dir):
-            eprint(f"Loading LVGL source files for documentation extraction from: {lvgl_dir}")
-            doc_index = load_lvgl_source_files(lvgl_dir)
-            eprint(f"Built documentation index with {len(doc_index)} functions")
-        else:
-            eprint(f"LVGL directory not found at {lvgl_dir}, generating stubs without documentation")
-    except Exception as e:
-        eprint(f"Warning: Could not load LVGL source files for documentation: {e}")
-    
-    # Generate main module stub
-    main_stub_content = generate_main_stub(module_name, metadata, doc_index)
-    main_stub_path = os.path.join(args.stubs_dir, f"{module_name}.pyi")
-    
-    with open(main_stub_path, "w") as stub_file:
-        stub_file.write(main_stub_content)
-    
-    eprint(f"Generated Python stub file: {main_stub_path}")
-    
-    eprint(f"Generated Python stub file with {len(metadata.get('objects', {}))} widgets, {len(metadata.get('functions', {}))} functions, and {len(metadata.get('enums', {}))} enums")
+    args.stubs_dir = os.path.join(script_dir, "..", "stubs", "lvgl-stubs")
+
+import os
+
+# Create stubs directory if it doesn't exist
+if not os.path.exists(args.stubs_dir):
+    os.makedirs(args.stubs_dir)
+
+# Prepare metadata for stub generation (reuse metadata structure if it exists)
+if not args.metadata:
+    # Generate metadata if not already created
+    metadata = collections.OrderedDict()
+    metadata["objects"] = {obj_name: obj_metadata[obj_name] for obj_name in obj_names}
+    metadata["functions"] = {
+        simplify_identifier(f.name): func_metadata[f.name] for f in module_funcs
+    }
+    metadata["enums"] = {
+        get_enum_name(enum_name): obj_metadata[enum_name]
+        for enum_name in enums.keys()
+        if enum_name not in enum_referenced
+    }
+    metadata["structs"] = [
+        simplify_identifier(struct_name)
+        for struct_name in generated_structs
+        if struct_name in generated_structs
+    ]
+    metadata["structs"] += [
+        simplify_identifier(struct_aliases[struct_name])
+        for struct_name in struct_aliases.keys()
+    ]
+    metadata["blobs"] = [
+        simplify_identifier(global_name) for global_name in generated_globals
+    ]
+    metadata["int_constants"] = [
+        get_enum_name(int_constant) for int_constant in int_constants
+    ]
+# Load LVGL source files for documentation extraction
+# Determine LVGL directory - look for it relative to the script location
+script_dir = os.path.dirname(os.path.abspath(__file__))
+lvgl_dir = os.path.join(script_dir, "..", "lvgl")
+if not os.path.exists(lvgl_dir):
+    # Alternative: try to find it relative to input file
+    if args.input:
+        input_dir = os.path.dirname(os.path.abspath(args.input[0]))
+        lvgl_dir = os.path.join(input_dir, "lvgl")
+
+doc_index = None
+try:
+    if os.path.exists(lvgl_dir):
+        eprint(f"Loading LVGL source files for documentation extraction from: {lvgl_dir}")
+        doc_index = load_lvgl_source_files(lvgl_dir)
+        eprint(f"Built documentation index with {len(doc_index)} functions")
+    else:
+        eprint(f"LVGL directory not found at {lvgl_dir}, generating stubs without documentation")
+except Exception as e:
+    eprint(f"Warning: Could not load LVGL source files for documentation: {e}")
+
+# Generate main module stub
+main_stub_content = generate_main_stub(module_name, metadata, doc_index)
+main_stub_path = os.path.join(args.stubs_dir, f"{module_name}.pyi")
+
+with open(main_stub_path, "w") as stub_file:
+    stub_file.write(main_stub_content)
+
+eprint(f"Generated Python stub file: {main_stub_path}")
+
+eprint(f"Generated Python stub file with {len(metadata.get('objects', {}))} widgets, {len(metadata.get('functions', {}))} functions, and {len(metadata.get('enums', {}))} enums")
