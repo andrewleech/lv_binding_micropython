@@ -49,7 +49,8 @@ endif
 endif # unix support
 
 ifeq ($(MICROPY_PORT),mimxrt)
-CFLAGS_USERMOD += -DLV_USE_PXP=1 -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
+# TODO: Re-enable PXP after fixing corruption issues
+CFLAGS_USERMOD += -DLV_USE_PXP=0 -DLV_USE_DRAW_PXP=0 -DLV_USE_GPU_NXP_PXP=0 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=0
 
 # Depending on how the USER_C_MODULE is declared the object files inside build can be based on
 # absolute or relative paths under this directory.
@@ -87,7 +88,7 @@ LVGL_MPY_METADATA = $(BUILD)/lvgl/lv_mpy.json
 CFLAGS_USERMOD += $(LV_CFLAGS)
 
 # MAKE SURE LV_CONF_PATH is a STRING
-CFLAGS_USERMOD += -DLV_CONF_PATH='$(LV_CONF_PATH)'
+CFLAGS_USERMOD += -DLV_CONF_PATH='"$(LV_CONF_PATH)"'
 # CFLAGS_USERMOD += -DLV_CONF_PATH=$(LV_CONF_PATH)
 
 

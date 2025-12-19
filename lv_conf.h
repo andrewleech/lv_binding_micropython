@@ -53,15 +53,15 @@
 #define LV_STDARG_INCLUDE       <stdarg.h>
 
 #if LV_USE_STDLIB_MALLOC == LV_STDLIB_BUILTIN
-    /** Size of memory available for `lv_malloc()` in bytes (>= 2kB) */
+/** Size of memory available for `lv_malloc()` in bytes (>= 2kB) */
     #define LV_MEM_SIZE (64 * 1024U)          /**< [bytes] */
 
-    /** Size of the memory expand for `lv_malloc()` in bytes */
+/** Size of the memory expand for `lv_malloc()` in bytes */
     #define LV_MEM_POOL_EXPAND_SIZE 0
 
-    /** Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too. */
+/** Set an address for the memory pool instead of allocating it as a normal array. Can be in external SRAM too. */
     #define LV_MEM_ADR 0     /**< 0: unused*/
-    /* Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc */
+/* Instead of an address give a memory allocator that will be called to get a memory pool for LVGL. E.g. my_malloc */
     #if LV_MEM_ADR == 0
         #undef LV_MEM_POOL_INCLUDE
         #undef LV_MEM_POOL_ALLOC
@@ -98,7 +98,7 @@
     #define LV_OS_CUSTOM_INCLUDE <stdint.h>
 #endif
 #if LV_USE_OS == LV_OS_FREERTOS
-    /*
+/*
      * Unblocking an RTOS task with a direct notification is 45% faster and uses less RAM
      * than unblocking a task using an intermediary object such as a binary semaphore.
      * RTOS task notifications can only be used when there is only one task that can be the recipient of the event.
@@ -134,7 +134,7 @@
  * It should be at least `LV_DRAW_LAYER_SIMPLE_BUF_SIZE` sized but if transformed layers are also used
  * it should be enough to store the largest widget too (width x height x 4 area).
  * Set it to 0 to have no limit. */
-/* #define LV_DRAW_LAYER_MAX_MEMORY 0 */  
+/* #define LV_DRAW_LAYER_MAX_MEMORY 0 */
 /**< No limit by default [bytes]*/
 
 /** Stack size of drawing thread.
@@ -145,50 +145,50 @@
 
 #define LV_USE_DRAW_SW 1
 #if LV_USE_DRAW_SW == 1
-    /*
+/*
      * Selectively disable color format support in order to reduce code size.
      * NOTE: some features use certain color formats internally, e.g.
      * - gradients use RGB888
      * - bitmaps with transparency may use ARGB8888
      */
     #define LV_DRAW_SW_SUPPORT_RGB565       1
-    /* #define LV_DRAW_SW_SUPPORT_RGB565A8     1 */
+/* #define LV_DRAW_SW_SUPPORT_RGB565A8     1 */
     #define LV_DRAW_SW_SUPPORT_RGB888       1
-    /* #define LV_DRAW_SW_SUPPORT_XRGB8888     1 */
+/* #define LV_DRAW_SW_SUPPORT_XRGB8888     1 */
     #define LV_DRAW_SW_SUPPORT_ARGB8888     1
-    /* #define LV_DRAW_SW_SUPPORT_ARGB8888_PREMULTIPLIED 1 */
-    /* #define LV_DRAW_SW_SUPPORT_L8           1 */
-    /* #define LV_DRAW_SW_SUPPORT_AL88         1 */
-    /* #define LV_DRAW_SW_SUPPORT_A8           1 */
+/* #define LV_DRAW_SW_SUPPORT_ARGB8888_PREMULTIPLIED 1 */
+/* #define LV_DRAW_SW_SUPPORT_L8           1 */
+/* #define LV_DRAW_SW_SUPPORT_AL88         1 */
+/* #define LV_DRAW_SW_SUPPORT_A8           1 */
     #define LV_DRAW_SW_SUPPORT_I1           1
 
-    /* The threshold of the luminance to consider a pixel as
+/* The threshold of the luminance to consider a pixel as
      * active in indexed color format */
-    /* #define LV_DRAW_SW_I1_LUM_THRESHOLD 127 */
+/* #define LV_DRAW_SW_I1_LUM_THRESHOLD 127 */
 
-    /** Set number of draw units.
+/** Set number of draw units.
      *  - > 1 requires operating system to be enabled in `LV_USE_OS`.
      *  - > 1 means multiple threads will render the screen in parallel. */
     #define LV_DRAW_SW_DRAW_UNIT_CNT    1
 
-    /** Use Arm-2D to accelerate software (sw) rendering. */
+/** Use Arm-2D to accelerate software (sw) rendering. */
     #define LV_USE_DRAW_ARM2D_SYNC      0
 
-    /** Enable native helium assembly to be compiled. */
+/** Enable native helium assembly to be compiled. */
     #define LV_USE_NATIVE_HELIUM_ASM    0
 
-    /**
+/**
      * - 0: Use a simple renderer capable of drawing only simple rectangles with gradient, images, text, and straight lines only.
      * - 1: Use a complex renderer capable of drawing rounded corners, shadow, skew lines, and arcs too. */
     #define LV_DRAW_SW_COMPLEX          1
 
     #if LV_DRAW_SW_COMPLEX == 1
-        /** Allow buffering some shadow calculation.
+/** Allow buffering some shadow calculation.
          *  LV_DRAW_SW_SHADOW_CACHE_SIZE is the maximum shadow size to buffer, where shadow size is
          *  `shadow_width + radius`.  Caching has LV_DRAW_SW_SHADOW_CACHE_SIZE^2 RAM cost. */
         #define LV_DRAW_SW_SHADOW_CACHE_SIZE 0
 
-        /** Set number of maximally-cached circle data.
+/** Set number of maximally-cached circle data.
          *  The circumference of 1/4 circle are saved for anti-aliasing.
          *  `radius * 4` bytes are used per circle (the most often used radiuses are saved).
          *  - 0: disables caching */
@@ -201,8 +201,8 @@
         #define  LV_DRAW_SW_ASM_CUSTOM_INCLUDE ""
     #endif
 
-    /** Enable drawing complex gradients in software: linear at an angle, radial or conical */
-    /* #define LV_USE_DRAW_SW_COMPLEX_GRADIENTS    0 */
+/** Enable drawing complex gradients in software: linear at an angle, radial or conical */
+/* #define LV_USE_DRAW_SW_COMPLEX_GRADIENTS    0 */
 
 #endif
 
@@ -210,7 +210,7 @@
 #define LV_USE_NEMA_GFX 0
 
 #if LV_USE_NEMA_GFX
-    /** Select which NemaGFX HAL to use. Possible options:
+/** Select which NemaGFX HAL to use. Possible options:
      * - LV_NEMA_HAL_CUSTOM
      * - LV_NEMA_HAL_STM32 */
     #define LV_USE_NEMA_HAL LV_NEMA_HAL_CUSTOM
@@ -218,10 +218,10 @@
         #define LV_NEMA_STM32_HAL_INCLUDE <stm32u5xx_hal.h>
     #endif
 
-    /*Enable Vector Graphics Operations. Available only if NemaVG library is present*/
+/*Enable Vector Graphics Operations. Available only if NemaVG library is present*/
     #define LV_USE_NEMA_VG 0
     #if LV_USE_NEMA_VG
-        /*Define application's resolution used for VG related buffer allocation */
+/*Define application's resolution used for VG related buffer allocation */
         #define LV_NEMA_GFX_MAX_RESX 800
         #define LV_NEMA_GFX_MAX_RESY 600
     #endif
@@ -233,20 +233,20 @@
 #endif
 
 #if LV_USE_DRAW_VGLITE
-    /** Enable blit quality degradation workaround recommended for screen's dimension > 352 pixels. */
+/** Enable blit quality degradation workaround recommended for screen's dimension > 352 pixels. */
     #define LV_USE_VGLITE_BLIT_SPLIT 0
 
     #if LV_USE_OS
-        /** Use additional draw thread for VG-Lite processing. */
+/** Use additional draw thread for VG-Lite processing. */
         #define LV_USE_VGLITE_DRAW_THREAD 1
 
         #if LV_USE_VGLITE_DRAW_THREAD
-            /** Enable VGLite draw async. Queue multiple tasks and flash them once to the GPU. */
+/** Enable VGLite draw async. Queue multiple tasks and flash them once to the GPU. */
             #define LV_USE_VGLITE_DRAW_ASYNC 1
         #endif
     #endif
 
-    /** Enable VGLite asserts. */
+/** Enable VGLite asserts. */
     #define LV_USE_VGLITE_ASSERT 0
 #endif
 
@@ -256,35 +256,37 @@
 #endif
 
 #if LV_USE_PXP
-    /** Use PXP for drawing.*/
+/** Use PXP for drawing.*/
+    #ifndef LV_USE_DRAW_PXP
     #define LV_USE_DRAW_PXP 1
+    #endif
 
-    /** Use PXP to rotate display.*/
+/** Use PXP to rotate display.*/
     #define LV_USE_ROTATE_PXP 0
 
     #if LV_USE_DRAW_PXP && LV_USE_OS
-        /** Use additional draw thread for PXP processing.*/
+/** Use additional draw thread for PXP processing.*/
         #define LV_USE_PXP_DRAW_THREAD 1
     #endif
 
-    /** Enable PXP asserts. */
-    #define LV_USE_PXP_ASSERT 0
+/** Enable PXP asserts. */
+    #define LV_USE_PXP_ASSERT 1
 #endif
 
 /** Use NXP's G2D on MPU platforms. */
 #define LV_USE_DRAW_G2D 0
 
 #if LV_USE_DRAW_G2D
-    /** Maximum number of buffers that can be stored for G2D draw unit.
+/** Maximum number of buffers that can be stored for G2D draw unit.
      *  Includes the frame buffers and assets. */
     #define LV_G2D_HASH_TABLE_SIZE 50
 
     #if LV_USE_OS
-        /** Use additional draw thread for G2D processing.*/
+/** Use additional draw thread for G2D processing.*/
         #define LV_USE_G2D_DRAW_THREAD 1
     #endif
 
-    /** Enable G2D asserts. */
+/** Enable G2D asserts. */
     #define LV_USE_G2D_ASSERT 0
 #endif
 
@@ -298,25 +300,25 @@
 #define LV_USE_DRAW_VG_LITE 0
 
 #if LV_USE_DRAW_VG_LITE
-    /** Enable VG-Lite custom external 'gpu_init()' function */
+/** Enable VG-Lite custom external 'gpu_init()' function */
     #define LV_VG_LITE_USE_GPU_INIT 0
 
-    /** Enable VG-Lite assert. */
+/** Enable VG-Lite assert. */
     #define LV_VG_LITE_USE_ASSERT 0
 
-    /** VG-Lite flush commit trigger threshold. GPU will try to batch these many draw tasks. */
+/** VG-Lite flush commit trigger threshold. GPU will try to batch these many draw tasks. */
     #define LV_VG_LITE_FLUSH_MAX_COUNT 8
 
-    /** Enable border to simulate shadow.
+/** Enable border to simulate shadow.
      *  NOTE: which usually improves performance,
      *  but does not guarantee the same rendering quality as the software. */
     #define LV_VG_LITE_USE_BOX_SHADOW 0
 
-    /** VG-Lite gradient maximum cache number.
+/** VG-Lite gradient maximum cache number.
      *  @note  The memory usage of a single gradient image is 4K bytes. */
     #define LV_VG_LITE_GRAD_CACHE_CNT 32
 
-    /** VG-Lite stroke maximum cache number. */
+/** VG-Lite stroke maximum cache number. */
     #define LV_VG_LITE_STROKE_CACHE_CNT 32
 #endif
 
@@ -327,7 +329,7 @@
 #if LV_USE_DRAW_DMA2D
     #define LV_DRAW_DMA2D_HAL_INCLUDE "stm32h7xx_hal.h"
 
-    /* if enabled, the user is required to call `lv_draw_dma2d_transfer_complete_interrupt_handler`
+/* if enabled, the user is required to call `lv_draw_dma2d_transfer_complete_interrupt_handler`
      * upon receiving the DMA2D global interrupt
      */
     #define LV_USE_DRAW_DMA2D_INTERRUPT 0
@@ -351,8 +353,8 @@
     #define LV_USE_LOG 0
 #endif
 
-#if LV_USE_LOG 
-    /** Set value to one of the following levels of logging detail:
+#if LV_USE_LOG
+/** Set value to one of the following levels of logging detail:
      *  - LV_LOG_LEVEL_TRACE    Log detailed information.
      *  - LV_LOG_LEVEL_INFO     Log important events.
      *  - LV_LOG_LEVEL_WARN     Log if something unwanted happened but didn't cause a problem.
@@ -361,25 +363,25 @@
      *  - LV_LOG_LEVEL_NONE     Do not log anything. */
     #define LV_LOG_LEVEL LV_LOG_LEVEL_INFO
 
-    /** - 1: Print log with 'printf';
+/** - 1: Print log with 'printf';
      *  - 0: User needs to register a callback with `lv_log_register_print_cb()`. */
     #define LV_LOG_PRINTF 0
 
-    /** Set callback to print logs.
+/** Set callback to print logs.
      *  E.g `my_print`. The prototype should be `void my_print(lv_log_level_t level, const char * buf)`.
      *  Can be overwritten by `lv_log_register_print_cb`. */
 
     #define LV_LOG_PRINT_CB mp_lv_log_cb
 
-    /** - 1: Enable printing timestamp;
+/** - 1: Enable printing timestamp;
      *  - 0: Disable printing timestamp. */
     #define LV_LOG_USE_TIMESTAMP 1
 
-    /** - 1: Print file and line number of the log;
+/** - 1: Print file and line number of the log;
      *  - 0: Do not print file and line number of the log. */
     #define LV_LOG_USE_FILE_LINE 1
 
-    /* Enable/disable LV_LOG_TRACE in modules that produces a huge number of logs. */
+/* Enable/disable LV_LOG_TRACE in modules that produces a huge number of logs. */
     #define LV_LOG_TRACE_MEM        1   /**< Enable/disable trace logs in memory operations. */
     #define LV_LOG_TRACE_TIMER      1   /**< Enable/disable trace logs in timer operations. */
     #define LV_LOG_TRACE_INDEV      1   /**< Enable/disable trace logs in input device operations. */
@@ -405,7 +407,7 @@
 
 /** Add a custom handler when assert happens e.g. to restart MCU. */
 #define LV_ASSERT_HANDLER_INCLUDE <stdint.h>
-#define LV_ASSERT_HANDLER while(1);     /**< Halt by default */
+#define LV_ASSERT_HANDLER while (1);     /**< Halt by default */
 
 /*-------------
  * Debug
@@ -440,8 +442,8 @@ extern void mp_lv_deinit_gc();
 
 #define LV_ENABLE_GLOBAL_CUSTOM 1
 #if LV_ENABLE_GLOBAL_CUSTOM
-    extern void *mp_lv_roots;
-    #define LV_GLOBAL_CUSTOM() ((lv_global_t*)mp_lv_roots)
+extern void *mp_lv_roots;
+    #define LV_GLOBAL_CUSTOM() ((lv_global_t *)mp_lv_roots)
 #endif
 
 /** Default cache size in bytes.
@@ -507,22 +509,22 @@ extern void mp_lv_deinit_gc();
 #define LV_USE_VG_LITE_THORVG  0
 
 #if LV_USE_VG_LITE_THORVG
-    /** Enable LVGL's blend mode support */
+/** Enable LVGL's blend mode support */
     #define LV_VG_LITE_THORVG_LVGL_BLEND_SUPPORT 0
 
-    /** Enable YUV color format support */
+/** Enable YUV color format support */
     #define LV_VG_LITE_THORVG_YUV_SUPPORT 0
 
-    /** Enable Linear gradient extension support */
+/** Enable Linear gradient extension support */
     #define LV_VG_LITE_THORVG_LINEAR_GRADIENT_EXT_SUPPORT 0
 
-    /** Enable alignment on 16 pixels */
+/** Enable alignment on 16 pixels */
     #define LV_VG_LITE_THORVG_16PIXELS_ALIGN 1
 
-    /** Buffer address alignment */
+/** Buffer address alignment */
     #define LV_VG_LITE_THORVG_BUF_ADDR_ALIGN 64
 
-    /** Enable multi-thread render */
+/** Enable multi-thread render */
     #define LV_VG_LITE_THORVG_THREAD_RENDER 0
 #endif
 
@@ -565,7 +567,7 @@ extern void mp_lv_deinit_gc();
 
 /** Export integer constant to binding. This macro is used with constants in the form of LV_<CONST> that
  *  should also appear on LVGL binding API such as MicroPython. */
-/* #define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning */  
+/* #define LV_EXPORT_CONST_INT(int_value) struct _silence_gcc_warning */
 /**< The default value just prevents GCC warning */
 
 #define LV_EXPORT_CONST_INT(int_value)  enum {ENUM_##int_value = int_value}
@@ -616,12 +618,12 @@ extern void mp_lv_deinit_gc();
 /* Demonstrate special features */
 #define LV_FONT_MONTSERRAT_28_COMPRESSED    0  /**< bpp = 3 */
 #define LV_FONT_DEJAVU_16_PERSIAN_HEBREW    0  /**< Hebrew, Arabic, Persian letters and all their forms */
-/* #define LV_FONT_SIMSUN_14_CJK               0 */  
+/* #define LV_FONT_SIMSUN_14_CJK               0 */
 /**< 1000 most common CJK radicals */
 #define LV_FONT_SIMSUN_16_CJK               0  /**< 1000 most common CJK radicals */
-/* #define LV_FONT_SOURCE_HAN_SANS_SC_14_CJK   0 */  
+/* #define LV_FONT_SOURCE_HAN_SANS_SC_14_CJK   0 */
 /**< 1338 most common CJK radicals */
-/* #define LV_FONT_SOURCE_HAN_SANS_SC_16_CJK   0 */  
+/* #define LV_FONT_SOURCE_HAN_SANS_SC_16_CJK   0 */
 /**< 1338 most common CJK radicals */
 
 /** Pixel perfect monospaced fonts */
@@ -685,7 +687,7 @@ extern void mp_lv_deinit_gc();
  *  https://www.w3.org/International/articles/inline-bidi-markup/uba-basics */
 #define LV_USE_BIDI 0
 #if LV_USE_BIDI
-    /*Set the default direction. Supported values:
+/*Set the default direction. Supported values:
     *`LV_BASE_DIR_LTR` Left-to-Right
     *`LV_BASE_DIR_RTL` Right-to-Left
     *`LV_BASE_DIR_AUTO` detect text base direction*/
@@ -781,7 +783,7 @@ extern void mp_lv_deinit_gc();
 
 #define LV_USE_SPAN       1
 #if LV_USE_SPAN
-    /** A line of text can contain this maximum number of span descriptors. */
+/** A line of text can contain this maximum number of span descriptors. */
     #define LV_SPAN_SNIPPET_STACK_SIZE 64
 #endif
 
@@ -814,13 +816,13 @@ extern void mp_lv_deinit_gc();
 /** A simple, impressive and very complete theme */
 #define LV_USE_THEME_DEFAULT 1
 #if LV_USE_THEME_DEFAULT
-    /** 0: Light mode; 1: Dark mode */
+/** 0: Light mode; 1: Dark mode */
     #define LV_THEME_DEFAULT_DARK 0
 
-    /** 1: Enable grow on press */
+/** 1: Enable grow on press */
     #define LV_THEME_DEFAULT_GROW 1
 
-    /** Default transition time in ms. */
+/** Default transition time in ms. */
     #define LV_THEME_DEFAULT_TRANSITION_TIME 80
 #endif /*LV_USE_THEME_DEFAULT*/
 
@@ -938,7 +940,7 @@ extern void mp_lv_deinit_gc();
 /** GIF decoder library */
 #define LV_USE_GIF 1
 #if LV_USE_GIF
-    /** GIF decoder accelerate */
+/** GIF decoder accelerate */
     #define LV_GIF_CACHE_DECODE_DATA 0
 #endif
 
@@ -963,10 +965,10 @@ extern void mp_lv_deinit_gc();
 #endif
 
 #if LV_USE_FREETYPE
-    /** Let FreeType use LVGL memory and file porting */
+/** Let FreeType use LVGL memory and file porting */
     #define LV_FREETYPE_USE_LVGL_PORT 0
 
-    /** Cache count of glyphs in FreeType, i.e. number of glyphs that can be cached.
+/** Cache count of glyphs in FreeType, i.e. number of glyphs that can be cached.
      *  The higher the value, the more memory will be used. */
     #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 256
 #endif
@@ -974,7 +976,7 @@ extern void mp_lv_deinit_gc();
 /** Built-in TTF decoder */
 #define LV_USE_TINY_TTF 0
 #if LV_USE_TINY_TTF
-    /* Enable loading TTF data from files */
+/* Enable loading TTF data from files */
     #define LV_TINY_TTF_FILE_SUPPORT 0
     #define LV_TINY_TTF_CACHE_GLYPH_CNT 256
 #endif
@@ -1017,9 +1019,9 @@ extern void mp_lv_deinit_gc();
     #define LV_USE_FFMPEG 0
 #endif
 #if LV_USE_FFMPEG
-    /** Dump input information to stderr */
+/** Dump input information to stderr */
     #define LV_FFMPEG_DUMP_FORMAT 0
-    /** Use lvgl file path in FFmpeg Player widget
+/** Use lvgl file path in FFmpeg Player widget
      *  You won't be able to open URLs after enabling this feature.
      *  Note that FFmpeg image decoder will always use lvgl file system. */
     #define LV_FFMPEG_PLAYER_USE_LV_FS 0
@@ -1036,21 +1038,21 @@ extern void mp_lv_deinit_gc();
 /** 1: Enable system monitor component */
 #define LV_USE_SYSMON   0
 #if LV_USE_SYSMON
-    /** Get the idle percentage. E.g. uint32_t my_get_idle(void); */
-    /* #define LV_SYSMON_GET_IDLE lv_os_get_idle_percent */
+/** Get the idle percentage. E.g. uint32_t my_get_idle(void); */
+/* #define LV_SYSMON_GET_IDLE lv_os_get_idle_percent */
     #define LV_SYSMON_GET_IDLE lv_timer_get_idle
 
-    /** 1: Show CPU usage and FPS count.
+/** 1: Show CPU usage and FPS count.
      *  - Requires `LV_USE_SYSMON = 1` */
     #define LV_USE_PERF_MONITOR 1
     #if LV_USE_PERF_MONITOR
         #define LV_USE_PERF_MONITOR_POS LV_ALIGN_BOTTOM_RIGHT
 
-        /** 0: Displays performance data on the screen; 1: Prints performance data using log. */
+/** 0: Displays performance data on the screen; 1: Prints performance data using log. */
         #define LV_USE_PERF_MONITOR_LOG_MODE 0
     #endif
 
-    /** 1: Show used memory and memory fragmentation.
+/** 1: Show used memory and memory fragmentation.
      *     - Requires `LV_USE_STDLIB_MALLOC = LV_STDLIB_BUILTIN`
      *     - Requires `LV_USE_SYSMON = 1`*/
     #define LV_USE_MEM_MONITOR 0
@@ -1062,60 +1064,60 @@ extern void mp_lv_deinit_gc();
 /** 1: Enable runtime performance profiler */
 #define LV_USE_PROFILER 0
 #if LV_USE_PROFILER
-    /** 1: Enable the built-in profiler */
+/** 1: Enable the built-in profiler */
     #define LV_USE_PROFILER_BUILTIN 1
     #if LV_USE_PROFILER_BUILTIN
-        /** Default profiler trace buffer size */
+/** Default profiler trace buffer size */
         #define LV_PROFILER_BUILTIN_BUF_SIZE (16 * 1024)     /**< [bytes] */
         #define LV_PROFILER_BUILTIN_DEFAULT_ENABLE 1
     #endif
 
-    /** Header to include for profiler */
+/** Header to include for profiler */
     #define LV_PROFILER_INCLUDE "lvgl/src/misc/lv_profiler_builtin.h"
 
-    /** Profiler start point function */
+/** Profiler start point function */
     #define LV_PROFILER_BEGIN    LV_PROFILER_BUILTIN_BEGIN
 
-    /** Profiler end point function */
+/** Profiler end point function */
     #define LV_PROFILER_END      LV_PROFILER_BUILTIN_END
 
-    /** Profiler start point function with custom tag */
+/** Profiler start point function with custom tag */
     #define LV_PROFILER_BEGIN_TAG LV_PROFILER_BUILTIN_BEGIN_TAG
 
-    /** Profiler end point function with custom tag */
+/** Profiler end point function with custom tag */
     #define LV_PROFILER_END_TAG   LV_PROFILER_BUILTIN_END_TAG
 
-    /*Enable layout profiler*/
+/*Enable layout profiler*/
     #define LV_PROFILER_LAYOUT 1
 
-    /*Enable disp refr profiler*/
+/*Enable disp refr profiler*/
     #define LV_PROFILER_REFR 1
 
-    /*Enable draw profiler*/
+/*Enable draw profiler*/
     #define LV_PROFILER_DRAW 1
 
-    /*Enable indev profiler*/
+/*Enable indev profiler*/
     #define LV_PROFILER_INDEV 1
 
-    /*Enable decoder profiler*/
+/*Enable decoder profiler*/
     #define LV_PROFILER_DECODER 1
 
-    /*Enable font profiler*/
+/*Enable font profiler*/
     #define LV_PROFILER_FONT 1
 
-    /*Enable fs profiler*/
+/*Enable fs profiler*/
     #define LV_PROFILER_FS 1
 
-    /*Enable style profiler*/
+/*Enable style profiler*/
     #define LV_PROFILER_STYLE 0
 
-    /*Enable timer profiler*/
+/*Enable timer profiler*/
     #define LV_PROFILER_TIMER 1
 
-    /*Enable cache profiler*/
+/*Enable cache profiler*/
     #define LV_PROFILER_CACHE 1
 
-    /*Enable event profiler*/
+/*Enable event profiler*/
     #define LV_PROFILER_EVENT 1
 #endif
 
@@ -1138,14 +1140,14 @@ extern void mp_lv_deinit_gc();
  *  - Requires: lv_keyboard */
 #define LV_USE_IME_PINYIN 0
 #if LV_USE_IME_PINYIN
-    /** 1: Use default thesaurus.
+/** 1: Use default thesaurus.
      *  @note  If you do not use the default thesaurus, be sure to use `lv_ime_pinyin` after setting the thesaurus. */
     #define LV_IME_PINYIN_USE_DEFAULT_DICT 1
-    /** Set maximum number of candidate panels that can be displayed.
+/** Set maximum number of candidate panels that can be displayed.
      *  @note  This needs to be adjusted according to size of screen. */
     #define LV_IME_PINYIN_CAND_TEXT_NUM 6
 
-    /** Use 9-key input (k9). */
+/** Use 9-key input (k9). */
     #define LV_IME_PINYIN_USE_K9_MODE      1
     #if LV_IME_PINYIN_USE_K9_MODE == 1
         #define LV_IME_PINYIN_K9_CAND_TEXT_NUM 3
@@ -1156,9 +1158,9 @@ extern void mp_lv_deinit_gc();
  *  - Requires: lv_table */
 #define LV_USE_FILE_EXPLORER                     0
 #if LV_USE_FILE_EXPLORER
-    /** Maximum length of path */
+/** Maximum length of path */
     #define LV_FILE_EXPLORER_PATH_MAX_LEN        (128)
-    /** Quick access bar, 1:use, 0:do not use.
+/** Quick access bar, 1:use, 0:do not use.
      *  - Requires: lv_list */
     #define LV_FILE_EXPLORER_QUICK_ACCESS        1
 #endif
@@ -1202,7 +1204,7 @@ extern void mp_lv_deinit_gc();
     #define LV_SDL_INCLUDE_PATH     <SDL2/SDL.h>
     #define LV_SDL_RENDER_MODE      LV_DISPLAY_RENDER_MODE_DIRECT   /**< LV_DISPLAY_RENDER_MODE_DIRECT is recommended for best performance */
     #define LV_SDL_BUF_COUNT        1    /**< 1 or 2 */
-    #define LV_SDL_ACCELERATED      1    
+    #define LV_SDL_ACCELERATED      1
 /**< 1: Use hardware acceleration*/
     #define LV_SDL_FULLSCREEN       0    /**< 1: Make the window full screen by default */
     #define LV_SDL_DIRECT_EXIT      1    /**< 1: Exit the application when all SDL windows are closed */
@@ -1214,7 +1216,7 @@ extern void mp_lv_deinit_gc();
 #if LV_USE_X11
     #define LV_X11_DIRECT_EXIT         1  /**< Exit application when all X11 windows have been closed */
     #define LV_X11_DOUBLE_BUFFER       1  /**< Use double buffers for rendering */
-    /* Select only 1 of the following render modes (LV_X11_RENDER_MODE_PARTIAL preferred!). */
+/* Select only 1 of the following render modes (LV_X11_RENDER_MODE_PARTIAL preferred!). */
     #define LV_X11_RENDER_MODE_PARTIAL 1  /**< Partial render mode (preferred) */
     #define LV_X11_RENDER_MODE_DIRECT  0  /**< Direct render mode */
     #define LV_X11_RENDER_MODE_FULL    0  /**< Full render mode */
@@ -1248,25 +1250,25 @@ extern void mp_lv_deinit_gc();
 #if LV_USE_NUTTX
     #define LV_USE_NUTTX_INDEPENDENT_IMAGE_HEAP 0
 
-    /** Use independent image heap for default draw buffer */
+/** Use independent image heap for default draw buffer */
     #define LV_NUTTX_DEFAULT_DRAW_BUF_USE_INDEPENDENT_IMAGE_HEAP    0
 
     #define LV_USE_NUTTX_LIBUV    0
 
-    /** Use Nuttx custom init API to open window and handle touchscreen */
+/** Use Nuttx custom init API to open window and handle touchscreen */
     #define LV_USE_NUTTX_CUSTOM_INIT    0
 
-    /** Driver for /dev/lcd */
+/** Driver for /dev/lcd */
     #define LV_USE_NUTTX_LCD      0
     #if LV_USE_NUTTX_LCD
         #define LV_NUTTX_LCD_BUFFER_COUNT    0
         #define LV_NUTTX_LCD_BUFFER_SIZE     60
     #endif
 
-    /** Driver for /dev/input */
+/** Driver for /dev/input */
     #define LV_USE_NUTTX_TOUCHSCREEN    0
 
-    /*Touchscreen cursor size in pixels(<=0: disable cursor)*/
+/*Touchscreen cursor size in pixels(<=0: disable cursor)*/
     #define LV_NUTTX_TOUCHSCREEN_CURSOR_SIZE    0
 #endif
 
@@ -1275,7 +1277,7 @@ extern void mp_lv_deinit_gc();
 
 #if LV_USE_LINUX_DRM
 
-    /* Use the MESA GBM library to allocate DMA buffers that can be
+/* Use the MESA GBM library to allocate DMA buffers that can be
      * shared across sub-systems and libraries using the Linux DMA-BUF API.
      * The GBM library aims to provide a platform independent memory management system
      * it supports the major GPU vendors - This option requires linking with libgbm */
@@ -1294,10 +1296,10 @@ extern void mp_lv_deinit_gc();
 #if LV_USE_LIBINPUT
     #define LV_LIBINPUT_BSD    0
 
-    /** Full keyboard support */
+/** Full keyboard support */
     #define LV_LIBINPUT_XKB             0
     #if LV_LIBINPUT_XKB
-        /** "setxkbmap -query" can help find the right values for your keyboard */
+/** "setxkbmap -query" can help find the right values for your keyboard */
         #define LV_LIBINPUT_XKB_KEY_MAP { .rules = NULL, .model = "pc101", .layout = "us", .variant = NULL, .options = NULL }
     #endif
 #endif
@@ -1321,7 +1323,7 @@ extern void mp_lv_deinit_gc();
 /** Driver for ST LTDC */
 #define LV_USE_ST_LTDC    0
 #if LV_USE_ST_LTDC
-    /* Only used for partial. */
+/* Only used for partial. */
     #define LV_ST_LTDC_USE_DMA2D_FLUSH 0
 #endif
 
