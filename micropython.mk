@@ -49,7 +49,8 @@ endif
 endif # unix support
 
 ifeq ($(MICROPY_PORT),mimxrt)
-CFLAGS_USERMOD += -DLV_USE_PXP=1 -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
+# PXP disabled - requires LV_DRAW_BUF_ALIGN=32 which breaks stride calculations
+CFLAGS_USERMOD += -DLV_USE_PXP=0 -DLV_USE_DRAW_PXP=0 -DLV_USE_GPU_NXP_PXP=0 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=0
 
 # Depending on how the USER_C_MODULE is declared the object files inside build can be based on
 # absolute or relative paths under this directory.
