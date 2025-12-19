@@ -114,7 +114,7 @@
 #define LV_DRAW_BUF_STRIDE_ALIGN                1
 
 /** Align start address of draw_buf addresses to this bytes*/
-#define LV_DRAW_BUF_ALIGN                       4
+#define LV_DRAW_BUF_ALIGN                       32  /* Required for PXP hardware acceleration */
 
 /** Using matrix for transformations.
  * Requirements:
