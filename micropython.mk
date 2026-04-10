@@ -49,8 +49,9 @@ endif
 endif # unix support
 
 ifeq ($(MICROPY_PORT),mimxrt)
-# Enable PXP hardware acceleration
+# Enable PXP hardware acceleration and rotation
 CFLAGS_USERMOD += -DLV_USE_PXP=1 -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
+CFLAGS_USERMOD += -DLV_USE_ROTATE_PXP=1
 # Include path for lvgl_support.h from display driver
 CFLAGS_USERMOD += -I$(USER_C_MODULES)/imxrt1170_display_driver/src/board
 
