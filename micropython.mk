@@ -49,11 +49,8 @@ endif
 endif # unix support
 
 ifeq ($(MICROPY_PORT),mimxrt)
-# Enable PXP hardware acceleration and rotation
-CFLAGS_USERMOD += -DLV_USE_PXP=1 -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
-CFLAGS_USERMOD += -DLV_USE_ROTATE_PXP=1
-# Include path for lvgl_support.h from display driver
-CFLAGS_USERMOD += -I$(USER_C_MODULES)/imxrt1170_display_driver/src/board
+# PXP/rotation/alignment flags are now set by the display driver's display.mk.
+# Only per-object warning suppressions remain here.
 
 # Depending on how the USER_C_MODULE is declared the object files inside build can be based on
 # absolute or relative paths under this directory.
