@@ -1,9 +1,12 @@
+################################################################################
+# LVGL port Support
+MICROPY_PORT = $(notdir $(CURDIR))
 
+ifeq ($(MICROPY_PORT),unix)
 ################################################################################
 # LVGL unix optional libraries
 # Update CFLAGS_USERMOD and LDFLAGS_USERMOD for LVGL extenral library,
 # but do that only on the unix port, for unix specific dependencies
-ifeq ($(notdir $(CURDIR)),unix)
 ifneq ($(UNAME_S),Darwin)
 CFLAGS_USERMOD += -DMICROPY_FB=1
 endif
@@ -15,7 +18,7 @@ CFLAGS_USERMOD += $(SDL_CFLAGS_USERMOD) -DMICROPY_SDL=1
 LDFLAGS_USERMOD += $(SDL_LDFLAGS_USERMOD)
 endif
 
-# Avoid including unwanted local headers other than sdl2 
+# Avoid including unwanted local headers other than sdl2
 ifeq ($(UNAME_S),Darwin)
 CFLAGS_USERMOD:=$(filter-out -I/usr/local/include,$(CFLAGS_USERMOD))
 endif
@@ -43,7 +46,31 @@ endif
 # LDFLAGS_USERMOD += $(FFMPEG_LDFLAGS_USERMOD)
 # endif
 
-endif
+endif # unix support
+
+ifeq ($(MICROPY_PORT),mimxrt)
+# Enable PXP hardware acceleration
+CFLAGS_USERMOD += -DLV_USE_PXP=1 -DLV_USE_DRAW_PXP=1 -DLV_USE_GPU_NXP_PXP=1 -DLV_USE_GPU_NXP_PXP_AUTO_INIT=1
+# Include path for lvgl_support.h from display driver
+CFLAGS_USERMOD += -I$(USER_C_MODULES)/imxrt1170_display_driver/src/board
+
+# The bindings generator preprocesses lvgl_private.h, which includes the PXP
+# headers and through them the NXP SDK. Preprocess it without the PXP unit; the
+# bindings do not expose it.
+LV_PP_CFLAGS = -ULV_USE_PXP -ULV_USE_DRAW_PXP -ULV_USE_ROTATE_PXP \
+	-DLV_USE_PXP=0 -DLV_USE_DRAW_PXP=0 -DLV_USE_ROTATE_PXP=0
+
+# Depending on how the USER_C_MODULE is declared the object files inside build can be based on
+# absolute or relative paths under this directory.
+MOD_ABSPATH := $(abspath $(USERMOD_DIR))
+MOD_DIRNAME := $(notdir $(MOD_ABSPATH))
+$(BUILD)/$(MOD_ABSPATH)/lvgl/src/draw/nxp/pxp/lv_draw_pxp.o: CFLAGS_USERMOD += -Wno-error=unused-variable
+$(BUILD)/$(MOD_DIRNAME)/lvgl/src/draw/nxp/pxp/lv_draw_pxp.o: CFLAGS_USERMOD += -Wno-error=unused-variable
+$(BUILD)/$(MOD_ABSPATH)/lvgl/src/draw/nxp/pxp/lv_draw_pxp_img.o: CFLAGS_USERMOD += -Wno-error=float-conversion
+$(BUILD)/$(MOD_DIRNAME)/lvgl/src/draw/nxp/pxp/lv_draw_pxp_img.o: CFLAGS_USERMOD += -Wno-error=float-conversion
+
+endif # mimxrt support
+
 
 ################################################################################
 
@@ -89,7 +116,7 @@ $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py
 		-I $(LVGL_BINDING_DIR)/stubs/include/freetype2 \
 		-I $(LVGL_BINDING_DIR)/pycparser/utils/fake_libc_include \
 		-I $(LVGL_BINDING_DIR)/stubs/include \
-		$(CFLAGS_USERMOD) \
+		$(CFLAGS_USERMOD) $(LV_PP_CFLAGS) \
 		$(LVGL_DIR)/lvgl_private.h | $(LV_PP_FILTER) > $(LVGL_PP)
 	$(Q)$(PYTHON) $(LVGL_BINDING_DIR)/gen/gen_mpy.py -M lvgl -MP lv -MD $(LVGL_MPY_METADATA) -E $(LVGL_PP) $(LVGL_DIR)/lvgl.h > $@
 
@@ -111,3 +138,12 @@ SRC_USERMOD_LIB_C += $(shell find $(LVGL_DIR)/examples -type f -name "*.c")
 endif
 
 SRC_USERMOD_C += $(LVGL_MPY)
+
+# include lvgl submodule check in the micropython submodules rule.
+LVGL_SUBMODULES = lvgl pycparser
+submodules: lvgl_submodule
+lvgl_submodule:
+	$(ECHO) "Updating submodules: $(LVGL_SUBMODULES)"
+	$(Q)cd $(LVGL_BINDING_DIR) && git submodule sync $(LVGL_SUBMODULES)
+	$(Q)cd $(LVGL_BINDING_DIR) && git submodule update --init $(LVGL_SUBMODULES)
+.PHONY: lvgl_submodule
