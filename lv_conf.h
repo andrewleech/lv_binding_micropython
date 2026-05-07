@@ -73,7 +73,7 @@
  *====================*/
 
 /** Default display refresh, input device read and animation step period. */
-#define LV_DEF_REFR_PERIOD  33      /**< [ms] */
+#define LV_DEF_REFR_PERIOD  16      /**< [ms] */
 
 /** Default Dots Per Inch. Used to initialize default sizes such as widgets sized, style paddings.
  * (Not so important, you can adjust it to modify default sizes and spaces.) */
@@ -114,7 +114,9 @@
 #define LV_DRAW_BUF_STRIDE_ALIGN                1
 
 /** Align start address of draw_buf addresses to this bytes*/
-#define LV_DRAW_BUF_ALIGN                       4
+#ifndef LV_DRAW_BUF_ALIGN
+#define LV_DRAW_BUF_ALIGN                       32
+#endif
 
 /** Using matrix for transformations.
  * Requirements:
@@ -228,7 +230,9 @@
 #endif
 
 /** Use NXP's VG-Lite GPU on iMX RTxxx platforms. */
+#ifndef LV_USE_DRAW_VGLITE
 #define LV_USE_DRAW_VGLITE 0
+#endif
 
 #if LV_USE_DRAW_VGLITE
     /** Enable blit quality degradation workaround recommended for screen's dimension > 352 pixels. */
@@ -248,15 +252,22 @@
     #define LV_USE_VGLITE_ASSERT 0
 #endif
 
-/** Use NXP's PXP on iMX RTxxx platforms. */
+/** Use NXP's PXP on iMX RTxxx platforms.
+ *  Default 0 — display driver's display.mk sets to 1 for mimxrt via -D flag. */
+#ifndef LV_USE_PXP
 #define LV_USE_PXP 0
+#endif
 
 #if LV_USE_PXP
     /** Use PXP for drawing.*/
+    #ifndef LV_USE_DRAW_PXP
     #define LV_USE_DRAW_PXP 1
+    #endif
 
     /** Use PXP to rotate display.*/
-    #define LV_USE_ROTATE_PXP 0
+    #ifndef LV_USE_ROTATE_PXP
+    #define LV_USE_ROTATE_PXP 1
+    #endif
 
     #if LV_USE_DRAW_PXP && LV_USE_OS
         /** Use additional draw thread for PXP processing.*/
@@ -1030,7 +1041,7 @@ extern void mp_lv_deinit_gc();
 #define LV_USE_SNAPSHOT 1
 
 /** 1: Enable system monitor component */
-#define LV_USE_SYSMON   0
+#define LV_USE_SYSMON   1
 #if LV_USE_SYSMON
     /** Get the idle percentage. E.g. uint32_t my_get_idle(void); */
     /* #define LV_SYSMON_GET_IDLE lv_os_get_idle_percent */
