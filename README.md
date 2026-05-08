@@ -220,8 +220,9 @@ Here is a procedure for adding lvgl to an existing MicroPython project. (The exa
 ### gen_mpy.py syntax
 ```
 usage: gen_mpy.py [-h] [-I <Include Path>] [-D <Macro Name>]
-                  [-E <Preprocessed File>] [-M <Module name string>]
-                  [-MP <Prefix string>] [-MD <MetaData File Name>]
+                  [-E <Preprocessed File>] [-J <JSON file>]
+                  [-M <Module name string>] [-MP <Prefix string>]
+                  [-MD <MetaData File Name>]
                   input [input ...]
 
 positional arguments:
@@ -236,6 +237,9 @@ optional arguments:
   -E <Preprocessed File>, --external-preprocessing <Preprocessed File>
                         Prevent preprocessing. Assume input file is already
                         preprocessed
+  -J <JSON file>, --lvgl-json <JSON file>
+                        Provde a JSON from the LVGL JSON generator for missing
+                        information
   -M <Module name string>, --module_name <Module name string>
                         Module name
   -MP <Prefix string>, --module_prefix <Prefix string>
@@ -244,10 +248,36 @@ optional arguments:
                         Optional file to emit metadata (introspection)
 ```
 
-Example:
+Example for gen_mpy.py:
 
 ```
 python gen_mpy.py -MD lv_mpy_example.json -M lvgl -MP lv -I../../berkeley-db-1.xx/PORT/include -I../../lv_binding_micropython -I. -I../.. -Ibuild -I../../mp-readline -I ../../lv_binding_micropython/pycparser/utils/fake_libc_include ../../lv_binding_micropython/lvgl/lvgl.h
+```
+
+
+### gen_stubs.py syntax
+```
+usage: gen_stubs.py [-h] --metadata METADATA --stubs-dir STUBS_DIR
+                    [--lvgl-dir LVGL_DIR] [--module-name MODULE_NAME]
+                    [--validate]
+
+Generate LVGL Python stub files
+
+options:
+  -h, --help            show this help message and exit
+  --metadata METADATA   JSON metadata file from gen_mpy.py
+  --stubs-dir STUBS_DIR
+                        Output directory for stub files
+  --lvgl-dir LVGL_DIR   LVGL source directory for documentation
+  --module-name MODULE_NAME
+                        Module name
+  --validate            Enable validation checks
+```
+
+Example for gen_stubs.py:
+
+```
+python gen_stubs.py --metadata lv_mpy_example.json --stubs-dir ./stubs-output --lvgl-dir ../lvgl --module-name lvgl --validate
 ```
 
 ### Binding other C libraries
@@ -506,4 +536,85 @@ print('\n'.join(dir(lvgl)))
 print('\n'.join(dir(lvgl.btn)))
 ...
 ```
+
+## IDE Support and Type Stubs
+
+`make LVGL_STUBS` produces a Python type stub describing the LVGL API as
+exposed to MicroPython. The stub is generated against the project's
+actual `lv_conf.h` so it always matches the symbols available in the
+build, and lands at the top of the build directory next to the firmware
+binary so users find it without digging.
+
+### Generating the stub
+
+```bash
+make USER_C_MODULES=/path/to/lv_binding_micropython LVGL_STUBS
+```
+
+Output: `<build_dir>/lvgl.pyi`. For the unix port that's
+`build-standard/lvgl.pyi`; for embedded ports the path follows the
+port's build directory convention (e.g. `build-SKYDECK_A01/lvgl.pyi`).
+
+The recipe slots into the binding's existing `gen_mpy.py` pipeline:
+LVGL's `gen_json.py` produces the API JSON, `gen_mpy.py` produces the
+MicroPython binding metadata as a side-effect, and `gen_stubs.py` reads
+both plus the LVGL headers to emit `lvgl.pyi`. Generation runs in
+parallel across CPU cores.
+
+### Pointing your IDE at the stub
+
+For Pyright/Pylance / VS Code, add the build directory to `extraPaths` in
+`pyrightconfig.json` or `.vscode/settings.json`:
+
+```json
+{
+  "python.analysis.extraPaths": ["path/to/build"]
+}
+```
+
+For mypy, add to `mypy.ini`:
+
+```ini
+[mypy]
+mypy_path = path/to/build
+```
+
+`import lvgl as lv` then resolves against the stub for autocompletion,
+type checking, and inline docstrings.
+
+### Standalone invocation
+
+If you have an `lv_mpy.json` from a previous build, regenerate the stub
+without re-running the rest of the build:
+
+```bash
+python gen/gen_stubs.py \
+    --metadata path/to/build/lvgl/lv_mpy.json \
+    --stubs-dir path/to/build \
+    --lvgl-dir lvgl \
+    --module-name lvgl \
+    --validate
+```
+
+### Build dependencies
+
+The stub generator runs entirely on the host build machine — it does not
+produce code that ends up on the device. The host needs:
+
+- **Python 3.8+** with `pycparser`. No new pip packages beyond what
+  `gen_mpy.py` already needs.
+- **A C preprocessor** (`cpp`) to expand `lvgl.h` against the project's
+  `lv_conf.h`. Standard build toolchain.
+- **The LVGL submodule** checked out at the version the firmware will
+  build against. `gen_stubs.py` walks `lvgl/src/{widgets,core,misc,draw}/*.h`
+  for documentation strings.
+
+The recipe runs `lvgl/scripts/gen_json/gen_json.py` with `--no-docstrings`.
+The docstring path inside `gen_json.py` imports `lvgl/docs/doxygen_xml.py`,
+which was a 1700-line Sphinx/Breathe helper deleted from LVGL master in
+commit `4750fe05` ("docs: modernize to .md/.mdx for new Fumadocs-based
+docs engine", April 2026), so the import fails on any recent LVGL pin.
+The same path requires the `doxygen` binary on the host. `gen_stubs.py`
+walks the C headers itself, so dropping the Doxygen path costs nothing
+visible in the generated stub.
 
