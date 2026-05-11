@@ -60,5 +60,12 @@ if (DEFINED LV_CONF_DIR)
     target_include_directories(usermod INTERFACE ${LV_CONF_DIR})
 endif()
 target_compile_options(usermod INTERFACE -DLV_CONF_PATH="${LV_CONF_PATH}")
+
+# LVGL's micropython stdlib shim uses m_tracked_calloc/realloc/free for all
+# its allocations. Requires MICROPY_TRACKED_ALLOC=1 to be defined when
+# micropython core is built. Set it on the usermod interface so it
+# propagates to every translation unit.
+target_compile_definitions(usermod INTERFACE MICROPY_TRACKED_ALLOC=1)
+
 target_link_libraries(usermod INTERFACE usermod_lvgl)
 

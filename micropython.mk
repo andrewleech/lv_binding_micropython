@@ -47,6 +47,12 @@ endif
 
 ################################################################################
 
+# LVGL's micropython stdlib shim uses m_tracked_calloc/realloc/free for all
+# its allocations. Requires MICROPY_TRACKED_ALLOC=1 in the port's
+# mpconfigport.h or via CFLAGS. Set it here so consumers don't have to know
+# about it; the unix port already enables it, embedded ports usually don't.
+CFLAGS_USERMOD += -DMICROPY_TRACKED_ALLOC=1
+
 # LVGL build rules
 
 
