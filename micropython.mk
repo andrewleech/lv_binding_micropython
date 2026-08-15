@@ -154,7 +154,7 @@ LVGL_MPY: $(LVGL_MPY)
 LVGL_STUBS: $(LVGL_STUBS_FILE)
 	@echo "Generated LVGL Python stub file: $(LVGL_STUBS_FILE)"
 
-CFLAGS_USERMOD += -Wno-unused-function
+CFLAGS_USERMOD += -Wno-error=unused-function
 CFLAGS_EXTRA += -Wno-unused-function
 
 # LVGL SRC
