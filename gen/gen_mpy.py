@@ -1115,11 +1115,11 @@ static mp_int_t mp_func_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, 
 
 // Casting
 
-// Generation counter tracking LVGL arena lifetime. Bumped by lvgl_mod___init__
-// and lvgl_mod___del__ so any mp_lv_struct_t whose data points into LVGL state
-// is invalidated when lv.deinit() runs. Wrappers whose data lives in the
-// MicroPython heap (made via make_new_lv_struct) are stamped with gen 0 and
-// skip the check.
+// Generation counter tracking LVGL arena lifetime. Bumped by mp_lv_init_gc /
+// mp_lv_deinit_gc -- the creation and teardown of the lv_global_t arena -- so
+// any mp_lv_struct_t whose data points into LVGL state is invalidated when
+// lv.deinit() runs. Wrappers whose data lives in the MicroPython heap (made
+// via make_new_lv_struct) are stamped with gen 0 and skip the check.
 static uint32_t mp_lv_arena_gen = 0;
 
 typedef struct mp_lv_struct_t
@@ -1374,12 +1374,19 @@ void mp_lv_log_cb(lv_log_level_t level, const char * buf){
     mp_printf(&mp_plat_print, buf);
 }
 
+// LV_GC_INIT / LV_GC_DEINIT: the only two points at which the lv_global_t
+// arena is actually created or dropped.  Both sit behind LVGL's own
+// already-initialised / already-deinitialised guards, so bumping the
+// generation here -- rather than at every lv.init() / lv.deinit() entry
+// point -- means a redundant call (importing lvgl a second time, calling
+// lv.init() on an already-live LVGL) leaves live wrappers valid.
 void mp_lv_init_gc()
 {
     if (!MP_STATE_VM(mp_lv_roots_initialized)) {
         // mp_printf(&mp_plat_print, "[ INIT GC ]");
         mp_lv_roots = MP_STATE_VM(mp_lv_roots) = m_new0(lv_global_t, 1);
         mp_lv_roots_initialized = MP_STATE_VM(mp_lv_roots_initialized) = 1;
+        mp_lv_arena_gen++;
     }
 }
 
@@ -1391,6 +1398,7 @@ void mp_lv_deinit_gc()
     mp_lv_user_data = MP_STATE_VM(mp_lv_user_data) = NULL;
     mp_lv_roots_initialized = MP_STATE_VM(mp_lv_roots_initialized) = 0;
     lvgl_mod_initialized = MP_STATE_VM(lvgl_mod_initialized) = 0;
+    mp_lv_arena_gen++;
 
 }
 
@@ -1399,7 +1407,6 @@ static mp_obj_t lvgl_mod___init__(void) {
         // __init__ for builtins is called each time the module is imported,
         //   so ensure that initialisation only happens once.
         MP_STATE_VM(lvgl_mod_initialized) = true;
-        mp_lv_arena_gen++;
         lv_init();
     }
     return mp_const_none;
@@ -1409,27 +1416,11 @@ static MP_DEFINE_CONST_FUN_OBJ_0(lvgl_mod___init___obj, lvgl_mod___init__);
 
 static mp_obj_t lvgl_mod___del__(void) {
     if (MP_STATE_VM(lvgl_mod_initialized)) {
-        mp_lv_arena_gen++;
         lv_deinit();
     }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(lvgl_mod___del___obj, lvgl_mod___del__);
-
-// Wrap user-callable lv.init() / lv.deinit() so they bump mp_lv_arena_gen too.
-// The auto-generated MP_DEFINE_CONST_LV_FUN_OBJ_STATIC_VAR(..., lv_init) emitted
-// later in this file picks up the macro substitutions below and references the
-// wrappers instead of the raw LVGL symbols.
-static inline void mp_lv_init_wrapped(void) {
-    mp_lv_arena_gen++;
-    lv_init();
-}
-static inline void mp_lv_deinit_wrapped(void) {
-    mp_lv_arena_gen++;
-    lv_deinit();
-}
-#define lv_init mp_lv_init_wrapped
-#define lv_deinit mp_lv_deinit_wrapped
 
 #else // LV_OBJ_T
 
