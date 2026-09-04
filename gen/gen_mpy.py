@@ -1121,13 +1121,37 @@ static mp_int_t mp_func_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, 
 
 // Casting
 
+// Generation counter tracking LVGL arena lifetime. Bumped by mp_lv_init_gc /
+// mp_lv_deinit_gc -- the creation and teardown of the lv_global_t arena -- so
+// any mp_lv_struct_t whose data points into LVGL state is invalidated when
+// lv.deinit() runs. Wrappers whose data lives in the MicroPython heap (made
+// via make_new_lv_struct) are stamped with gen 0 and skip the check.
+static uint32_t mp_lv_arena_gen = 0;
+
 typedef struct mp_lv_struct_t
 {
     mp_obj_base_t base;
     void *data;
+    uint32_t lv_arena_gen;
 } mp_lv_struct_t;
 
 static const mp_lv_struct_t mp_lv_null_obj;
+
+// Slow path kept out-of-line so the ~700 call sites don't each inline the
+// exception-construction sequence. Marked noreturn so the compiler keeps it
+// off the hot path.
+GENMPY_UNUSED MP_NORETURN static void mp_lv_raise_stale(void) {
+    nlr_raise(
+        mp_obj_new_exception_msg(
+            &mp_type_LvReferenceError,
+            MP_ERROR_TEXT("Referenced LVGL struct was invalidated by lv.deinit()!")));
+}
+
+static inline void mp_lv_check_stale(const mp_lv_struct_t *self) {
+    if (self->lv_arena_gen != 0 && self->lv_arena_gen != mp_lv_arena_gen) {
+        mp_lv_raise_stale();
+    }
+}
 
 #ifdef LV_OBJ_T
 static mp_int_t mp_lv_obj_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, mp_uint_t flags);
@@ -1356,12 +1380,19 @@ void mp_lv_log_cb(lv_log_level_t level, const char * buf){
     mp_printf(&mp_plat_print, buf);
 }
 
+// LV_GC_INIT / LV_GC_DEINIT: the only two points at which the lv_global_t
+// arena is actually created or dropped.  Both sit behind LVGL's own
+// already-initialised / already-deinitialised guards, so bumping the
+// generation here -- rather than at every lv.init() / lv.deinit() entry
+// point -- means a redundant call (importing lvgl a second time, calling
+// lv.init() on an already-live LVGL) leaves live wrappers valid.
 void mp_lv_init_gc()
 {
     if (!MP_STATE_VM(mp_lv_roots_initialized)) {
         // mp_printf(&mp_plat_print, "[ INIT GC ]");
         mp_lv_roots = MP_STATE_VM(mp_lv_roots) = m_new0(lv_global_t, 1);
         mp_lv_roots_initialized = MP_STATE_VM(mp_lv_roots_initialized) = 1;
+        mp_lv_arena_gen++;
     }
 }
 
@@ -1373,6 +1404,7 @@ void mp_lv_deinit_gc()
     mp_lv_user_data = MP_STATE_VM(mp_lv_user_data) = NULL;
     mp_lv_roots_initialized = MP_STATE_VM(mp_lv_roots_initialized) = 0;
     lvgl_mod_initialized = MP_STATE_VM(lvgl_mod_initialized) = 0;
+    mp_lv_arena_gen++;
 
 }
 
@@ -1440,6 +1472,7 @@ static mp_lv_struct_t *mp_to_lv_struct(mp_obj_t mp_obj)
             mp_obj_new_exception_msg(
                 &mp_type_SyntaxError, MP_ERROR_TEXT("Expected Struct object!")));
     mp_lv_struct_t *mp_lv_struct = MP_OBJ_TO_PTR(native_obj);
+    mp_lv_check_stale(mp_lv_struct);
     return mp_lv_struct;
 }
 
@@ -1471,7 +1504,8 @@ static mp_obj_t make_new_lv_struct(
     size_t count = (n_args > 0) && (mp_obj_is_int(args[0]))? mp_obj_get_int(args[0]): 1;
     *self = (mp_lv_struct_t){
         .base = {type},
-        .data = (size == 0 || (other && other->data == NULL))? NULL: m_malloc(size * count)
+        .data = (size == 0 || (other && other->data == NULL))? NULL: m_malloc(size * count),
+        .lv_arena_gen = 0  // MP-heap allocated, lifetime independent of lv.deinit()
     };
     if (self->data) {
         if (other) {
@@ -1524,7 +1558,8 @@ static mp_obj_t lv_struct_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t valu
     mp_lv_struct_t *element_at_index = m_new_obj(mp_lv_struct_t);
     *element_at_index = (mp_lv_struct_t){
         .base = {type},
-        .data = element_addr
+        .data = element_addr,
+        .lv_arena_gen = self->lv_arena_gen  // byref child shares parent's lifetime
     };
 
     if (value != MP_OBJ_SENTINEL){
@@ -1552,7 +1587,8 @@ static mp_obj_t lv_to_mp_struct(const mp_obj_type_t *type, void *lv_struct)
     mp_lv_struct_t *self = m_new_obj(mp_lv_struct_t);
     *self = (mp_lv_struct_t){
         .base = {type},
-        .data = lv_struct
+        .data = lv_struct,
+        .lv_arena_gen = mp_lv_arena_gen  // tracks current arena; invalidated on next lv.deinit()
     };
     return MP_OBJ_FROM_PTR(self);
 }
@@ -1656,6 +1692,7 @@ static void mp_blob_print(const mp_print_t *print,
 static mp_int_t mp_blob_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, mp_uint_t flags) {
     (void)flags;
     mp_lv_struct_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_lv_check_stale(self);
 
     bufinfo->buf = &self->data;
     bufinfo->len = sizeof(self->data);
@@ -1701,7 +1738,7 @@ static MP_DEFINE_CONST_OBJ_TYPE(
     buffer, mp_blob_get_buffer
 );
 
-static const mp_lv_struct_t mp_lv_null_obj = { {&mp_blob_type}, NULL };
+static const mp_lv_struct_t mp_lv_null_obj = { .base = {&mp_blob_type}, .data = NULL, .lv_arena_gen = 0 };
 
 static inline mp_obj_t ptr_to_mp(void *data)
 {
@@ -1717,7 +1754,8 @@ static mp_obj_t mp_lv_cast(mp_obj_t type_obj, mp_obj_t ptr_obj)
     mp_lv_struct_t *self = m_new_obj(mp_lv_struct_t);
     *self = (mp_lv_struct_t){
         .base = {(const mp_obj_type_t*)type_obj},
-        .data = ptr
+        .data = ptr,
+        .lv_arena_gen = mp_lv_arena_gen
     };
     return MP_OBJ_FROM_PTR(self);
 }
@@ -1743,6 +1781,7 @@ static mp_obj_t mp_lv_dereference(size_t argc, const mp_obj_t *argv)
     mp_obj_t self_in = argv[0];
     mp_obj_t size_in = argc > 1? argv[1]: mp_const_none;
     mp_lv_struct_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_lv_check_stale(self);
     size_t size = 0;
     if (size_in == mp_const_none){
         const mp_obj_type_t *type = self->base.type;
@@ -1944,9 +1983,9 @@ GENMPY_UNUSED static mp_obj_t mp_array_from_ptr(void *lv_arr, size_t element_siz
 {
     mp_lv_array_t *self = m_new_obj(mp_lv_array_t);
     *self = (mp_lv_array_t){
-        { {&mp_lv_array_type}, lv_arr },
-        element_size,
-        is_signed
+        .base = { .base = {&mp_lv_array_type}, .data = lv_arr, .lv_arena_gen = mp_lv_arena_gen },
+        .element_size = element_size,
+        .is_signed = is_signed
     };
     return MP_OBJ_FROM_PTR(self);
 }
@@ -2444,6 +2483,7 @@ static inline const mp_obj_type_t *get_mp_{sanitized_struct_name}_type();
 static inline void* mp_write_ptr_{sanitized_struct_name}(mp_obj_t self_in)
 {{
     mp_lv_struct_t *self = MP_OBJ_TO_PTR(cast(self_in, get_mp_{sanitized_struct_name}_type()));
+    mp_lv_check_stale(self);
     return ({struct_tag}{struct_name}*)self->data;
 }}
 
@@ -2460,6 +2500,7 @@ static inline mp_obj_t mp_read_ptr_{sanitized_struct_name}(void *field)
 static void mp_{sanitized_struct_name}_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {{
     mp_lv_struct_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_lv_check_stale(self);
     GENMPY_UNUSED {struct_tag}{struct_name} *data = ({struct_tag}{struct_name}*)self->data;
 
     if (dest[0] == MP_OBJ_NULL) {{
@@ -3529,8 +3570,9 @@ typedef struct {{
  */
 
 static const mp_lv_struct_t mp_{global_name} = {{
-    {{ &mp_{struct_name}_type }},
-    ({cast}*)&{global_name}
+    .base = {{ &mp_{struct_name}_type }},
+    .data = ({cast}*)&{global_name},
+    .lv_arena_gen = 0
 }};
     """.format(
             module_name=module_name,
