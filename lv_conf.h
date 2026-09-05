@@ -26,7 +26,18 @@
    COLOR SETTINGS
  *====================*/
 
-/** Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888) */
+/** The format LVGL renders in by default.  This is the modern spelling;
+ *  LVGL derives it from LV_COLOR_DEPTH only when it is absent, and warns
+ *  when it has to. */
+#define LV_COLOR_FORMAT_DEFAULT LV_COLOR_FORMAT_RGB565
+
+/** Color depth: 1 (I1), 8 (L8), 16 (RGB565), 24 (RGB888), 32 (XRGB8888)
+ *
+ *  Deprecated by LVGL in favour of LV_COLOR_FORMAT_DEFAULT above, and kept
+ *  only because drivers in this repo still branch on it -- see
+ *  driver/stm32/STM32F7DISC/modrk043fn48h.c.  Defining both is warning-free:
+ *  LVGL's deprecation notice is guarded on LV_COLOR_FORMAT_DEFAULT being
+ *  undefined.  Keep the two in agreement. */
 #define LV_COLOR_DEPTH 16
 
 /*=========================
@@ -410,8 +421,14 @@
 #define LV_USE_ASSERT_MEM_INTEGRITY 0   /**< Check the integrity of `lv_mem` after critical operations. (Slow) */
 #define LV_USE_ASSERT_OBJ           0   /**< Check the object's type and existence (e.g. not deleted). (Slow) */
 
-/** Add a custom handler when assert happens e.g. to restart MCU. */
-#define LV_ASSERT_HANDLER_INCLUDE <stdint.h>
+/** Add a custom handler when assert happens e.g. to restart MCU.
+ *
+ *  No LV_ASSERT_HANDLER_INCLUDE: LVGL deprecated it, and the header it
+ *  used to name here was <stdint.h>, which defines no handler.  A handler
+ *  defined directly in lv_conf.h is honoured as-is -- lv_assert.h only
+ *  supplies its own `while(1);` when LV_ASSERT_HANDLER is undefined.
+ *  A project needing a real custom handler sets LV_ASSERT_USE_CUSTOM_INCLUDE
+ *  plus LV_ASSERT_CUSTOM_INCLUDE and defines the handler in that header. */
 #define LV_ASSERT_HANDLER while(1);     /**< Halt by default */
 
 /*-------------
@@ -436,6 +453,12 @@
 
 /* PRIVATE API */
 
+/* Must stay on for gen_mpy as well as for the compiled binding.  LVGL keeps
+ * struct definitions in its *_private.h tree -- lv_event_t among them -- and
+ * gen_mpy needs to see them to emit callback wrappers rather than treating a
+ * callback argument as an opaque pointer.  The parse pass reads that tree via
+ * pycparser and gets its freetype/SDL declarations from
+ * gen/pycparser_fake_3rdparty/; see micropython.mk. */
 #define LV_USE_PRIVATE_API 1
 
 /*Garbage Collector settings
@@ -735,13 +758,11 @@ extern void mp_lv_deinit_gc();
 #define LV_USE_CALENDAR   1
 #if LV_USE_CALENDAR
     #define LV_CALENDAR_WEEK_STARTS_MONDAY 0
-    #if LV_CALENDAR_WEEK_STARTS_MONDAY
-        #define LV_CALENDAR_DEFAULT_DAY_NAMES {"Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"}
-    #else
-        #define LV_CALENDAR_DEFAULT_DAY_NAMES {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"}
-    #endif
-
-    #define LV_CALENDAR_DEFAULT_MONTH_NAMES {"January", "February", "March",  "April", "May",  "June", "July", "August", "September", "October", "November", "December"}
+    /* Day and month names come from LVGL's own LV_MONDAY_STR / LV_JANUARY_STR
+     * defaults, which are the same strings this file used to spell out via the
+     * deprecated LV_CALENDAR_DEFAULT_DAY_NAMES / _MONTH_NAMES arrays.  LVGL
+     * orders the weekday names from LV_CALENDAR_WEEK_STARTS_MONDAY itself.
+     * Override an individual name by defining that one macro here. */
     #define LV_USE_CALENDAR_HEADER_ARROW 1
     #define LV_USE_CALENDAR_HEADER_DROPDOWN 1
     #define LV_USE_CALENDAR_CHINESE 0
