@@ -120,10 +120,15 @@ $(LVGL_JSON): $(ALL_LVGL_SRC)
 		echo "Warning: LVGL JSON generator not found, using empty JSON"; \
 	fi
 
+# The -I ahead of CFLAGS_USERMOD shadows /usr/include/freetype2 and
+# /usr/include/SDL2 for this pass only, so pycparser reads the stubs in
+# gen/pycparser_fake_3rdparty/ instead of the real vendor headers it cannot
+# parse.  LVGL's private tree pulls those in and gen_mpy needs the private
+# tree for struct definitions -- see that directory's README.
 $(LVGL_MPY): $(ALL_LVGL_SRC) $(LVGL_BINDING_DIR)/gen/gen_mpy.py $(LVGL_JSON)
 	$(ECHO) "LVGL-GEN $@"
 	$(Q)mkdir -p $(dir $@)
-	$(Q)$(CPP) $(CFLAGS_USERMOD) -DPYCPARSER -x c -I $(LVGL_BINDING_DIR)/pycparser/utils/fake_libc_include $(INC) $(LVGL_DIR)/lvgl.h > $(LVGL_PP)
+	$(Q)$(CPP) -I $(LVGL_BINDING_DIR)/gen/pycparser_fake_3rdparty $(CFLAGS_USERMOD) -DPYCPARSER -x c -I $(LVGL_BINDING_DIR)/pycparser/utils/fake_libc_include $(INC) $(LVGL_DIR)/lvgl.h > $(LVGL_PP)
 	$(Q)$(PYTHON) $(LVGL_BINDING_DIR)/gen/gen_mpy.py -M lvgl -MP lv -MD $(LVGL_MPY_METADATA) -J $(LVGL_JSON) -E $(LVGL_PP) $(LVGL_DIR)/lvgl.h > $@
 
 # Python stub file generation. lvgl.pyi lands at the top of the build
@@ -156,6 +161,16 @@ LVGL_STUBS: $(LVGL_STUBS_FILE)
 
 CFLAGS_USERMOD += -Wno-error=unused-function
 CFLAGS_EXTRA += -Wno-unused-function
+
+# gen_mpy binds the whole public LVGL API, deprecated entry points included --
+# lv_obj_add_flag, lv_obj_bind_flag_if_eq, lv_obj_style_set_disabled and the
+# rest.  Dropping them from the binding would break user code that LVGL itself
+# still compiles, so the generated file necessarily references them.  Demote
+# rather than silence, matching -Wno-error=unused-function above: the warning
+# still names each deprecated symbol at build time, so the list of APIs to
+# migrate stays visible instead of disappearing.
+CFLAGS_USERMOD += -Wno-error=deprecated-declarations
+CFLAGS_EXTRA += -Wno-error=deprecated-declarations
 
 # LVGL SRC
 SRC_USERMOD_LIB_C += $(shell find $(LVGL_DIR)/src -type f -name "*.c")
