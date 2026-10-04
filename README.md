@@ -601,8 +601,8 @@ python gen/gen_stubs.py \
 The stub generator runs entirely on the host build machine — it does not
 produce code that ends up on the device. The host needs:
 
-- **Python 3.8+** with `pycparser`. No new pip packages beyond what
-  `gen_mpy.py` already needs.
+- **Python 3.10+** with `pycparser` 3.0. `gen_mpy.py` uses the pinned
+  `pycparser` submodule; no additional pip packages are needed.
 - **A C preprocessor** (`cpp`) to expand `lvgl.h` against the project's
   `lv_conf.h`. Standard build toolchain.
 - **The LVGL submodule** checked out at the version the firmware will
